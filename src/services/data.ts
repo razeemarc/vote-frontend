@@ -5,10 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 export interface Election {
   id: string;
   title: string;
-  description: string;
+ 
   startDate: Date;
   endDate: Date;
   status: 'upcoming' | 'active' | 'completed';
+  userId?: string | null;
 }
 
 export interface Participant {
@@ -35,7 +36,6 @@ const mockElections: Election[] = [
   {
     id: "1",
     title: "Student Council Election 2025",
-    description: "Annual election for student council positions",
     startDate: new Date(2025, 5, 15),
     endDate: new Date(2025, 5, 20),
     status: "upcoming"
@@ -43,7 +43,6 @@ const mockElections: Election[] = [
   {
     id: "2",
     title: "Faculty Board Election",
-    description: "Election for faculty board members",
     startDate: new Date(2025, 3, 10),
     endDate: new Date(2025, 3, 15),
     status: "completed"
@@ -51,7 +50,6 @@ const mockElections: Election[] = [
   {
     id: "3",
     title: "Department Chair Election",
-    description: "Election for department chair position",
     startDate: new Date(),
     endDate: new Date(new Date().setDate(new Date().getDate() + 7)),
     status: "active"

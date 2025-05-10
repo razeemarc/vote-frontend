@@ -136,7 +136,7 @@ const Vote = () => {
       <Card>
         <CardHeader>
           <CardTitle>{election.title}</CardTitle>
-          <CardDescription>{election.description}</CardDescription>
+         
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-amber-600">
@@ -178,8 +178,7 @@ const Vote = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Election Information</h3>
-                <p><strong>Title:</strong> {election.title}</p>
-                <p><strong>Description:</strong> {election.description}</p>
+                <p><strong>Title:</strong> {election.title}</p>   
                 <p><strong>Start Date:</strong> {new Date(election.startDate).toLocaleDateString()}</p>
                 <p><strong>End Date:</strong> {new Date(election.endDate).toLocaleDateString()}</p>
               </div>
@@ -211,7 +210,6 @@ const Vote = () => {
     <Card>
       <CardHeader>
         <CardTitle>{election.title}</CardTitle>
-        <CardDescription>{election.description}</CardDescription>
       </CardHeader>
       <CardContent>
         {hasVoted ? (

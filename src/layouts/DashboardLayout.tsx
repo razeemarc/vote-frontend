@@ -17,7 +17,7 @@ const DashboardLayout = () => {
     else if (path === "/users") setPageTitle("User Management");
     else if (path === "/elections") setPageTitle("Elections");
     else if (path === "/requests") setPageTitle("Participant Requests");
-    else if (path === "/profile") setPageTitle("Profile");
+   
     else if (path.startsWith("/vote")) setPageTitle("Vote");
   }, [location]);
 

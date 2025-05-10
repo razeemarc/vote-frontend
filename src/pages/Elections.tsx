@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,6 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -35,6 +33,7 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Elections = () => {
   const { user } = useAuth();
@@ -43,108 +42,87 @@ const Elections = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  
-  // Form state
+
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  
-  // Redirect non-admin users
-  if (user?.role !== "admin") {
-    return <Navigate to="/" />;
-  }
-  
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const fetchElections = async () => {
-      try {
-        const data = await getElections();
-        setElections(data);
-        setLoading(false);
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch elections. Please try again later.",
-        });
-        setLoading(false);
-      }
-    };
-    
-    fetchElections();
-  }, [toast]);
-  
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [userId, setUserId] = useState<string | undefined>();
+
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+
+  if (user?.role !== "admin") return <Navigate to="/" />;
+
+
   const handleCreateElection = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!startDate || !endDate) {
+    if (!startDate || !endDate || !startTime || !endTime) {
       toast({
         variant: "destructive",
-        title: "Missing dates",
-        description: "Please select both start and end dates.",
+        title: "Missing data",
+        description: "Please select all dates and times.",
       });
       return;
     }
-    
-    // Determine status based on dates
+
     const now = new Date();
+    const start = new Date(`${format(startDate, "yyyy-MM-dd")}T${startTime}`);
+    const end = new Date(`${format(endDate, "yyyy-MM-dd")}T${endTime}`);
+
     let status: "upcoming" | "active" | "completed" = "upcoming";
-    if (startDate <= now && endDate >= now) {
-      status = "active";
-    } else if (endDate < now) {
-      status = "completed";
-    }
-    
+    if (start <= now && end >= now) status = "active";
+    else if (end < now) status = "completed";
+
     try {
       const newElection = await createElection({
         title,
-        description,
-        startDate,
-        endDate,
-        status
+        startDate: start,
+        endDate: end,
+        status,
+        userId: userId || null,
       });
-      
+
       setElections([...elections, newElection]);
       setDialogOpen(false);
       resetForm();
-      
+
       toast({
         title: "Election Created",
         description: "The election has been created successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create election. Please try again.",
+        description: "Failed to create election.",
       });
     }
   };
-  
+
   const resetForm = () => {
     setTitle("");
-    setDescription("");
     setStartDate(undefined);
     setEndDate(undefined);
+    setStartTime("");
+    setEndTime("");
+    setUserId(undefined);
   };
-  
-  const filteredElections = elections.filter(election => 
-    election.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    election.description.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredElections = elections.filter(e =>
+    e.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search elections..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        
+        <Input
+          placeholder="Search elections..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -157,94 +135,118 @@ const Elections = () => {
               <DialogHeader>
                 <DialogTitle>Create New Election</DialogTitle>
                 <DialogDescription>
-                  Create a new election with title, description, and schedule.
+                  Fill in the details to schedule an election.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">Title</label>
+                <div>
+                  <label className="text-sm font-medium">Title</label>
                   <Input
-                    id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Election title"
                     required
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="description" className="text-sm font-medium">Description</label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe the election"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
+
+                <div>
                   <label className="text-sm font-medium">Start Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "flex-1 justify-start text-left font-normal",
+                            !startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-[150px]"
+                      required
+                    />
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
+
+                <div>
                   <label className="text-sm font-medium">End Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                        disabled={(date) => !startDate || date < startDate}
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "flex-1 justify-start text-left font-normal",
+                            !endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          initialFocus
+                          disabled={(date) => !startDate || date < startDate}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-[150px]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Assign User (Optional)</label>
+                  <Select onValueChange={setUserId} value={userId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select user (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => {
-                  resetForm();
-                  setDialogOpen(false);
-                }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    resetForm();
+                    setDialogOpen(false);
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">Create Election</Button>
@@ -253,14 +255,13 @@ const Elections = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <Card>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -277,16 +278,15 @@ const Elections = () => {
                 filteredElections.map((election) => (
                   <TableRow key={election.id}>
                     <TableCell className="font-medium">{election.title}</TableCell>
-                    <TableCell>{election.description}</TableCell>
-                    <TableCell>{new Date(election.startDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(election.endDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(election.startDate).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(election.endDate).toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={
-                          election.status === "active" 
-                            ? "default" 
-                            : election.status === "upcoming" 
-                            ? "outline" 
+                          election.status === "active"
+                            ? "default"
+                            : election.status === "upcoming"
+                            ? "outline"
                             : "secondary"
                         }
                       >

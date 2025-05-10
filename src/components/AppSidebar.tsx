@@ -48,7 +48,6 @@ export function AppSidebar() {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem active={isActive("/")}>
@@ -58,12 +57,18 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              <SidebarMenuItem active={isActive("/profile")}>
-                <SidebarMenuButton onClick={() => navigate("/profile")}>
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarMenuItem active={isActive("/elections")}>
+                    <SidebarMenuButton onClick={() => navigate("/elections")}>
+                      <Calendar className="h-4 w-4" />
+                      <span>Elections</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem active={isActive("/requests")}>
+                    <SidebarMenuButton onClick={() => navigate("/requests")}>
+                      <Vote className="h-4 w-4" />
+                      <span>Participant Requests</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
               
               {user?.role === "admin" && (
                 <>
@@ -74,19 +79,9 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   
-                  <SidebarMenuItem active={isActive("/elections")}>
-                    <SidebarMenuButton onClick={() => navigate("/elections")}>
-                      <Calendar className="h-4 w-4" />
-                      <span>Elections</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+               
                   
-                  <SidebarMenuItem active={isActive("/requests")}>
-                    <SidebarMenuButton onClick={() => navigate("/requests")}>
-                      <Vote className="h-4 w-4" />
-                      <span>Participant Requests</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                 
                 </>
               )}
             </SidebarMenu>
